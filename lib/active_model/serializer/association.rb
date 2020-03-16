@@ -55,6 +55,12 @@ module ActiveModel
         association_object = association_serializer && association_serializer.object
         return unless association_object
 
+        serializer_name = association_serializer.json_key
+        if association_serializer.root
+          # hack : we have to grab the serializer fields for the association from the class name
+          serializer_name = association_serializer.object.class.to_s.split('::ActiveRecord_Associations_CollectionProxy', 0).first.pluralize.downcase
+        end
+
         adapter_sub_options = adapter_options.deep_dup
         fields = adapter_options.fetch(:fields, nil)
         sub_fields = []
@@ -62,7 +68,7 @@ module ActiveModel
           sub_fields = fields.fetch(association_serializer.json_key, nil)
         else
           fields.each do |f|
-            sub_fields = f.fetch(association_serializer.json_key, nil) if f.is_a?(Hash)
+            sub_fields = f.fetch(serializer_name, nil) if f.is_a?(Hash)
             break if sub_fields.present?
           end unless fields.nil?
         end
